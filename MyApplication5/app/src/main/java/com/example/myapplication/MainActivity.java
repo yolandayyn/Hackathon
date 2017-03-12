@@ -2,14 +2,21 @@ package com.example.myapplication;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.speech.RecognizerIntent;
 import android.support.v7.app.AppCompatActivity;
+import android.text.SpannableString;
+import android.text.style.ImageSpan;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,15 +40,19 @@ public class MainActivity extends AppCompatActivity {
     private final int REQ_CODE_SPEECH_INPUT = 100;
     private Map<String, Object> con;
 
+    LinearLayout ll;
+    int lr = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         btn = (Button) findViewById(R.id.button);
         editText = (EditText) findViewById(R.id.editText);
-        textView = (TextView) findViewById(R.id.textView);
+
         recBtn = (ImageButton) findViewById(R.id.imageButton2);
         initializeService();
+
+        ll = (LinearLayout) findViewById(R.id.chat);
     }
 
     private class WastonTask extends AsyncTask<String, Void, String> {
@@ -53,20 +64,98 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             String a = process();
+
+            System.out.println("a is: " + a);
+
             return a;
         }
 
         @Override
         protected void onPostExecute(String s) {
-            textView.append(responseWord+"\n");
+
+            //textView.append(responseWord+"\n");
+            TextView tv = new TextView(MainActivity.this);
+            tv.setId(View.generateViewId());
+
+            RelativeLayout rl = new RelativeLayout(MainActivity.this);
+            RelativeLayout.LayoutParams params;
+
+            Bitmap originalBitmap = BitmapFactory.decodeResource(getResources(),
+                    R.drawable.p12);
+            int originalWidth = originalBitmap.getWidth();
+            int originalHeight = originalBitmap.getHeight();
+            int newWidth = 100;
+            int newHeight = 100;
+            float scale = ((float) newHeight) / originalHeight;
+            Matrix matrix = new Matrix();
+            matrix.postScale(scale, scale);
+            Bitmap changedBitmap = Bitmap.createBitmap(originalBitmap, 0, 0,
+                    originalWidth, originalHeight, matrix, true);
+            ImageSpan is = new ImageSpan(MainActivity.this, changedBitmap);
+            SpannableString ss = new SpannableString("  " + responseWord.substring(1,responseWord.length()-1));
+            ss.setSpan(is, 0, 1, 0);
+            tv.setText(ss);
+            tv.setTextSize(24);
+
+            params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+            params.addRule(RelativeLayout.ALIGN_PARENT_LEFT, tv.getId());
+
+            rl.addView(tv, params);
+            ll.addView(rl);
+
+            //jump to the result page
+            if(responseWord.contains("ER")){
+
+                Intent i = new Intent(MainActivity.this, page3.class);
+                startActivity(i);
+
+            }
+            else if(responseWord.contains("just fine")){
+                Intent i = new Intent(MainActivity.this, Main2Activity.class);
+                startActivity(i);
+            }
+
+            editText.setText("");
+
         }
+
     }
 
         public void pressBtn(View view) {
             text = editText.getText().toString();
-            textView.append(text+"\n");
+            //textView.append(text+"\n");
+
+            TextView tv = new TextView(this);
+            tv.setId(View.generateViewId());
+
+            RelativeLayout rl = new RelativeLayout(this);
+            RelativeLayout.LayoutParams params;
+
+            Bitmap originalBitmap = BitmapFactory.decodeResource(getResources(),
+                    R.drawable.p11);
+            int originalWidth = originalBitmap.getWidth();
+            int originalHeight = originalBitmap.getHeight();
+            int newWidth = 100;
+            int newHeight = 100;
+            float scale = ((float) newHeight) / originalHeight;
+            Matrix matrix = new Matrix();
+            matrix.postScale(scale, scale);
+            Bitmap changedBitmap = Bitmap.createBitmap(originalBitmap, 0, 0,
+                    originalWidth, originalHeight, matrix, true);
+            ImageSpan is = new ImageSpan(this, changedBitmap);
+            SpannableString ss = new SpannableString(text + "  ");
+            ss.setSpan(is, ss.length() - 1, ss.length(), 0);
+            tv.setText(ss);
+            tv.setTextSize(24);
+            params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+            params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, tv.getId());
+
+            rl.addView(tv, params);
+            ll.addView(rl);
+
             WastonTask wastonTask = new WastonTask();
             wastonTask.execute(new String[]{});
+
         }
 
 
@@ -128,5 +217,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    }
+
+
+}
 
